@@ -4,11 +4,11 @@ import (
 	"fmt"
 )
 
-func commandMapForward(cfg *config) error {
+func commandMapForward(cfg *config, _ []string) error {
 	return traverse(cfg.pokeApi.Map, "You are on the last page")
 }
 
-func commandMapBack(cfg *config) error {
+func commandMapBack(cfg *config, _ []string) error {
 	return traverse(cfg.pokeApi.Mapb, "You are on the first page")
 }
 

@@ -34,13 +34,18 @@ func repl(config *config, scanner *bufio.Scanner) {
 			continue
 		}
 
-		command, ok := getCommands()[strings.ToLower(scanner.Text())]
+		inputWords := strings.Fields(strings.ToLower(scanner.Text()))
+		if len(inputWords) == 0 {
+			continue
+		}
+
+		command, ok := getCommands()[inputWords[0]]
 		if !ok {
 			fmt.Println("Invalid command. Use 'help' for a list of commands.")
 			continue
 		}
 
-		err := command.callback(config)
+		err := command.callback(config, inputWords[1:])
 		if err != nil {
 			fmt.Println("There was an following error processing your command.", err)
 		}
@@ -50,7 +55,7 @@ func repl(config *config, scanner *bufio.Scanner) {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, []string) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -70,6 +75,11 @@ func getCommands() map[string]cliCommand {
 			description: "Traverse locations back.",
 			callback:    commandMapBack,
 		},
+		"explore": {
+			name:        "explore <location_name>",
+			description: "Lists all pokemons in given location.",
+			callback:    commandExplore,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",
@@ -78,15 +88,15 @@ func getCommands() map[string]cliCommand {
 	}
 }
 
-func commandHelp(_ *config) error {
+func commandHelp(_ *config, _ []string) error {
 	fmt.Println("List of avalable commands:")
-	for name, command := range getCommands() {
-		fmt.Printf("%s: %s\n", name, command.description)
+	for _, command := range getCommands() {
+		fmt.Printf("%s: %s\n", command.name, command.description)
 	}
 	return nil
 }
 
-func commandExit(_ *config) error {
+func commandExit(_ *config, _ []string) error {
 	fmt.Println("Thanks for using the Pokedex!")
 	fmt.Println("Have a nice day!")
 	os.Exit(0)

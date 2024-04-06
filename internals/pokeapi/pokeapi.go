@@ -10,6 +10,10 @@ import (
 	"github.com/speady1445/Pokedex/internals/pokecache"
 )
 
+const (
+	baseURL = "https://pokeapi.co/api/v2"
+)
+
 type PokeAPI struct {
 	next     *string
 	previous *string
@@ -17,7 +21,7 @@ type PokeAPI struct {
 }
 
 func GetPokeAPI() *PokeAPI {
-	startPlace := "https://pokeapi.co/api/v2/location-area/"
+	startPlace := baseURL + "/location-area/"
 	return &PokeAPI{
 		next:     &startPlace,
 		previous: nil,
@@ -39,7 +43,7 @@ func (c *PokeAPI) Mapb() ([]string, error) {
 	return c.getLocations(*c.previous)
 }
 
-type locationAreaResponse struct {
+type locationAreas struct {
 	Count    int     `json:"count"`
 	Next     *string `json:"next"`
 	Previous *string `json:"previous"`
@@ -55,7 +59,7 @@ func (c *PokeAPI) getLocations(url string) ([]string, error) {
 		return []string{}, err
 	}
 
-	decodedResponse := locationAreaResponse{}
+	decodedResponse := locationAreas{}
 	err = json.Unmarshal(body, &decodedResponse)
 	if err != nil {
 		return []string{}, err
@@ -69,6 +73,33 @@ func (c *PokeAPI) getLocations(url string) ([]string, error) {
 		locations = append(locations, location.Name)
 	}
 	return locations, nil
+}
+
+type locationArea struct {
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+		} `json:"pokemon"`
+	} `json:"pokemon_encounters"`
+}
+
+func (c *PokeAPI) GetPokemons(locationName string) ([]string, error) {
+	body, err := c.fetchBody(baseURL + "/location-area/" + locationName)
+	if err != nil {
+		return []string{}, err
+	}
+
+	locationResponse := locationArea{}
+	err = json.Unmarshal(body, &locationResponse)
+	if err != nil {
+		return []string{}, err
+	}
+
+	pokemons := make([]string, 0, len(locationResponse.PokemonEncounters))
+	for _, pokemon := range locationResponse.PokemonEncounters {
+		pokemons = append(pokemons, pokemon.Pokemon.Name)
+	}
+	return pokemons, nil
 }
 
 func (c *PokeAPI) fetchBody(url string) ([]byte, error) {
