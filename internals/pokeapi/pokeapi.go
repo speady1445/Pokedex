@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+
+	"github.com/speady1445/Pokedex/internals/pokecache"
 )
 
 type PokeAPI struct {
 	next     *string
 	previous *string
+	cache    pokecache.Cache
 }
 
 func GetPokeAPI() *PokeAPI {
@@ -17,6 +21,7 @@ func GetPokeAPI() *PokeAPI {
 	return &PokeAPI{
 		next:     &startPlace,
 		previous: nil,
+		cache:    pokecache.NewCache(5 * time.Minute),
 	}
 }
 
@@ -45,16 +50,7 @@ type locationAreaResponse struct {
 }
 
 func (c *PokeAPI) getLocations(url string) ([]string, error) {
-	response, err := http.Get(url)
-	if err != nil {
-		return []string{}, err
-	}
-
-	body, err := io.ReadAll(response.Body)
-	response.Body.Close()
-	if response.StatusCode > 299 {
-		return []string{}, fmt.Errorf("response failed with status code: %d", response.StatusCode)
-	}
+	body, err := c.fetchBody(url)
 	if err != nil {
 		return []string{}, err
 	}
@@ -73,4 +69,28 @@ func (c *PokeAPI) getLocations(url string) ([]string, error) {
 		locations = append(locations, location.Name)
 	}
 	return locations, nil
+}
+
+func (c *PokeAPI) fetchBody(url string) ([]byte, error) {
+	body, ok := c.cache.Get(url)
+	if ok {
+		return body, nil
+	}
+
+	response, err := http.Get(url)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	body, err = io.ReadAll(response.Body)
+	response.Body.Close()
+	if response.StatusCode > 299 {
+		return []byte{}, fmt.Errorf("response failed with status code: %d", response.StatusCode)
+	}
+	if err != nil {
+		return []byte{}, err
+	}
+
+	c.cache.Add(url, body)
+	return body, nil
 }
