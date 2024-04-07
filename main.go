@@ -10,12 +10,14 @@ import (
 )
 
 type config struct {
-	pokeApi *pokeapi.PokeAPI
+	pokeApi        *pokeapi.PokeAPI
+	caughtPokemons map[string]pokeapi.Pokemon
 }
 
 func main() {
 	config := &config{
-		pokeApi: pokeapi.GetPokeAPI(),
+		pokeApi:        pokeapi.GetPokeAPI(),
+		caughtPokemons: make(map[string]pokeapi.Pokemon),
 	}
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -79,6 +81,11 @@ func getCommands() map[string]cliCommand {
 			name:        "explore <location_name>",
 			description: "Lists all pokemons in given location.",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch <pokemon_name>",
+			description: "Attempts to catch pokemon.",
+			callback:    commandCatch,
 		},
 		"exit": {
 			name:        "exit",

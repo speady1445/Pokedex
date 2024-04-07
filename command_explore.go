@@ -11,7 +11,7 @@ func commandExplore(cfg *config, inputs []string) error {
 	}
 
 	area := inputs[0]
-	pokemons, err := cfg.pokeApi.GetPokemons(area)
+	pokemons, err := cfg.pokeApi.GetPokemonsInLocation(area)
 	if err != nil {
 		return err
 	}

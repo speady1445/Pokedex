@@ -83,7 +83,7 @@ type locationArea struct {
 	} `json:"pokemon_encounters"`
 }
 
-func (c *PokeAPI) GetPokemons(locationName string) ([]string, error) {
+func (c *PokeAPI) GetPokemonsInLocation(locationName string) ([]string, error) {
 	body, err := c.fetchBody(baseURL + "/location-area/" + locationName)
 	if err != nil {
 		return []string{}, err
